@@ -145,6 +145,66 @@ This prevents multiple parallel `post` requests from inserting the same ID.
 
 ---
 
+## Final Logic
+
+The final `post` logic follows this order:
+
+```js
+if (this.pending.has(id)) {
+  return -1
+}
+
+this.pending.add(id)
+
+try {
+  const existingValue = await this.db.read(id)
+
+  if (existingValue !== null) {
+    return -1
+  }
+
+  await this.db.create(id, value)
+  return 1
+} finally {
+  this.pending.delete(id)
+}
+```
+
+The `finally` block is important because it removes the ID from the lock set even if something goes wrong during the async operation.
+
+---
+
+## Why `Set` Was Useful
+
+A `Set` stores unique values.
+
+That means the same ID cannot be added again while it is already being processed.
+
+Example:
+
+```js
+this.pending.add(1)
+this.pending.has(1) // true
+```
+
+This made it perfect for tracking IDs that are currently being inserted.
+
+---
+
+## Time And Space Complexity
+
+### `get(id)`
+
+- Time complexity: `O(1)` average database lookup
+- Space complexity: `O(1)`
+
+### `post(id, value)`
+
+- Time complexity: `O(1)` average database lookup and insert
+- Space complexity: `O(n)` in the worst case, where `n` is the number of IDs being processed at the same time
+
+---
+
 ## Important Detail
 
 One hidden test expected a success return value after insertion.
