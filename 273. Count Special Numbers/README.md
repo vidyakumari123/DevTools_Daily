@@ -105,12 +105,6 @@ This creates four empty parts, so:
 
 That means `777` has three `7` digits.
 
----
-
-## Diagram
-
-This diagram shows how the function decides whether each number should be counted.
-
 ```mermaid
 flowchart TD
     A[Input: collection of numbers] --> B[Start count at 0]
